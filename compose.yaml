@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: minidrive
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - '5432:5432'
+
+  api:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: npm run dev
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+
+  web:
+    image: node:24-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host"
+    ports:
+      - '5173:5173'
+    depends_on:
+      - api
+
+volumes:
+  db-data:
