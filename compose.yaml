@@ -16,6 +16,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
+      - ./uploads:/data/uploads # Persistent storage for uploaded files
     command: npm run dev
     ports:
       - '8080:8080'
