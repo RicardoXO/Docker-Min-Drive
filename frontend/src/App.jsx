@@ -1,35 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react'; // React
 
-function App() {
-  const [count, setCount] = useState(0)
+const API_URL = 'http://localhost:8080'; // URL de la API backend
+
+// Componente principal de la aplicación
+export default function App() { 
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/files`)
+      .then((res) => res.json())
+      .then((data) => {
+        setFiles(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <p>Cargando archivos...</p>;
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div style={{ padding: 20 }}>
+      <h1>Mini Drive</h1>
 
-export default App
+      {files.length === 0 && <p>No hay archivos</p>}
+
+      <ul>
+        {files.map((file) => (
+          <li key={file.id}>
+            <strong>{file.original_name}</strong>{' '}
+            <a
+              href={`${API_URL}/files/${file.id}/preview`}
+              target='_blank'
+              rel='noreferrer'
+            >
+              Preview
+            </a>
+            {' | '}
+            <a href={`${API_URL}/files/${file.id}`}>Descargar</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
