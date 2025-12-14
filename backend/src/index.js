@@ -58,6 +58,7 @@ app.post('/files', upload.single('file'), async (req, res) => {
   }
 });
 
+// Endpoint de listado
 app.get('/files', async (req, res) => {
   try {
     const result = await query('SELECT * FROM files ORDER BY created_at DESC');
@@ -68,6 +69,35 @@ app.get('/files', async (req, res) => {
     res.status(500).json({ error: 'Could not list files' });
   }
 });
+
+// Endpoint de download
+app.get("/files/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await query(
+      "SELECT * FROM files WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const file = result.rows[0];
+    const filePath = path.join("/data/uploads", file.stored_name);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File missing on disk" });
+    }
+
+    res.download(filePath, file.original_name);
+  } catch (err) {
+    console.error("DOWNLOAD ERROR:", err);
+    res.status(500).json({ error: "Could not download file" });
+  }
+});
+
 
 // Health
 app.get('/health', (_, res) => {
