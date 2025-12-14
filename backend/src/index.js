@@ -58,6 +58,17 @@ app.post('/files', upload.single('file'), async (req, res) => {
   }
 });
 
+app.get('/files', async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM files ORDER BY created_at DESC');
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('LIST FILES ERROR:', err);
+    res.status(500).json({ error: 'Could not list files' });
+  }
+});
+
 // Health
 app.get('/health', (_, res) => {
   res.json({ ok: true });
