@@ -3,6 +3,7 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { query } from './db.js';
 
 const app = express();
 app.use(cors());
@@ -28,20 +29,33 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Endpoint de upload
-app.post('/files', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
+app.post('/files', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
 
-  res.json({
-    message: 'File uploaded',
-    file: {
-      originalName: req.file.originalname,
-      storedName: req.file.filename,
-      size: req.file.size,
-      path: req.file.path,
-    },
-  });
+    const result = await query(
+      `INSERT INTO files (original_name, stored_name, mime_type, size_bytes)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [
+        req.file.originalname,
+        req.file.filename,
+        req.file.mimetype,
+        req.file.size,
+      ]
+    );
+
+    return res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('UPLOAD ERROR:', err);
+
+    return res.status(500).json({
+      error: 'Upload failed',
+      detail: err.message,
+    });
+  }
 });
 
 // Health

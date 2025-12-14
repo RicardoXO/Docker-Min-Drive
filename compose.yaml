@@ -14,10 +14,12 @@ services:
   api:
     image: node:24-alpine
     working_dir: /app
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/minidrive
     volumes:
       - ./backend:/app
-      - ./uploads:/data/uploads # Persistent storage for uploaded files
-    command: npm run dev
+      - ./uploads:/data/uploads
+    command: node src/index.js
     ports:
       - '8080:8080'
     depends_on:
