@@ -33,7 +33,70 @@ export default function App() {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+  const handleDelete = async (id) => {
+    const ok = window.confirm('¿Seguro que quieres borrar este archivo?');
+    if (!ok) return;
 
+    try {
+      const res = await fetch(`${API_URL}/files/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        throw new Error('Delete failed');
+      }
+
+      loadFiles();
+    } catch (err) {
+      console.error(err);
+      alert('Error borrando archivo');
+    }
+  };
+
+  const handleUpload = (e) => {
+    e.preventDefault();
+
+    const fileInput = e.target.file;
+    if (!fileInput.files.length) return;
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    const xhr = new XMLHttpRequest();
+
+    setUploading(true);
+    setProgress(0);
+
+    xhr.open('POST', `${API_URL}/files`);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      setUploading(false);
+      setProgress(0);
+      fileInput.value = '';
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        loadFiles();
+      } else {
+        alert('Error subiendo archivo');
+      }
+    };
+
+    xhr.onerror = () => {
+      setUploading(false);
+      setProgress(0);
+      alert('Error de red');
+    };
+
+    xhr.send(formData);
+  };
+  /* 
   const handleUpload = async (e) => {
     // Manejar subida de archivos
     e.preventDefault();
@@ -70,6 +133,9 @@ export default function App() {
       setUploading(false);
     }
   };
+  */
+
+  const [progress, setProgress] = useState(0);
 
   return (
     // Renderizar la interfaz de usuario
@@ -81,6 +147,29 @@ export default function App() {
         <button type='submit' disabled={uploading}>
           {uploading ? 'Subiendo...' : 'Subir'}
         </button>
+        {uploading && (
+          <div style={{ marginTop: 10 }}>
+            <div
+              style={{
+                height: 8,
+                width: '100%',
+                background: '#eee',
+                borderRadius: 4,
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${progress}%`,
+                  background: '#4caf50',
+                  borderRadius: 4,
+                  transition: 'width 0.2s',
+                }}
+              />
+            </div>
+            <div style={{ fontSize: 12 }}>{progress}%</div>
+          </div>
+        )}
       </form>
 
       <hr />
@@ -130,6 +219,18 @@ export default function App() {
               </a>
               {' | '}
               <a href={`${API_URL}/files/${file.id}`}>Descargar</a>
+              {' | '}
+              <button
+                onClick={() => handleDelete(file.id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'red',
+                  cursor: 'pointer',
+                }}
+              >
+                Eliminar
+              </button>
             </div>
           </li>
         ))}
