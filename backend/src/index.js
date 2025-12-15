@@ -127,6 +127,38 @@ app.get("/files/:id/preview", async (req, res) => {
   }
 });
 
+// Endpoint de delete
+app.delete('/files/:id',async (req, res)=>{
+  try{
+    const {id} = req.params;
+    
+    const result = await query(
+      "SELECT * FROM files WHERE id = $1",
+      [id]
+    );
+    if(result.rows.length ===0){
+      return res.status(404).json({error: "File not found"});
+    }
+    const file = result.rows[0];
+    const filePath = path.join("/data/uploads", file.stored_name);
+
+    // Borrar el archivo del disco
+    if(fs.existsSync(filePath)){
+      fs.unlinkSync(filePath);
+    }
+
+    // Borrar el registro de la base de datos
+    await query(
+      "DELETE FROM files WHERE id = $1",
+      [id]
+    );
+    res.json({message: "File deleted successfully"});
+  }catch(err){
+    console.error("DELETE ERROR:", err);
+    res.status(500).json({error: "Could not delete file"});
+  }
+});
+
 // Health
 app.get('/health', (_, res) => {
   res.json({ ok: true });
