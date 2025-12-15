@@ -27,6 +27,13 @@ export default function App() {
     loadFiles();
   }, []);
 
+  const formatSize = (bytes) => {
+    // Formatear tamaño de archivo
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const handleUpload = async (e) => {
     // Manejar subida de archivos
     e.preventDefault();
@@ -82,17 +89,48 @@ export default function App() {
 
       <ul>
         {files.map((file) => (
-          <li key={file.id}>
-            <strong>{file.original_name}</strong>{' '}
-            <a
-              href={`${API_URL}/files/${file.id}/preview`}
-              target='_blank'
-              rel='noreferrer'
-            >
-              Preview
-            </a>
-            {' | '}
-            <a href={`${API_URL}/files/${file.id}`}>Descargar</a>
+          // Renderizar cada archivo
+          <li //Formarto del contenedor de cada archivo
+            key={file.id}
+            style={{
+              marginBottom: 20,
+              padding: 10,
+              border: '1px solid #ddd',
+              borderRadius: 6,
+            }}
+          >
+            <div>
+              <strong>{file.original_name}</strong>
+            </div>
+
+            <div style={{ fontSize: 12, color: '#a1e746ff' }}>
+              {file.mime_type} · {formatSize(Number(file.size_bytes))}
+            </div>
+
+            {file.mime_type.startsWith('image/') && (
+              <img
+                src={`${API_URL}/files/${file.id}/preview`}
+                alt={file.original_name}
+                style={{
+                  marginTop: 10,
+                  maxWidth: 200,
+                  display: 'block',
+                  borderRadius: 4,
+                }}
+              />
+            )}
+
+            <div style={{ marginTop: 8 }}>
+              <a
+                href={`${API_URL}/files/${file.id}/preview`}
+                target='_blank'
+                rel='noreferrer'
+              >
+                Preview
+              </a>
+              {' | '}
+              <a href={`${API_URL}/files/${file.id}`}>Descargar</a>
+            </div>
           </li>
         ))}
       </ul>
